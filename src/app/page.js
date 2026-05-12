@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 export default function DoctorHome() {
   const router = useRouter();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mode, setMode] = useState(null); // null | 'scan' | 'manual'
   const [scanning, setScanning] = useState(false);
   const [manualForm, setManualForm] = useState({
@@ -30,6 +31,14 @@ export default function DoctorHome() {
     setError("");
     try {
       const { Html5Qrcode } = await import("html5-qrcode");
+      // ensure cleanup of previous instance if it exists
+      if (html5QrRef.current) {
+        try {
+          await html5QrRef.current.stop();
+          html5QrRef.current.clear();
+        } catch (e) {}
+      }
+      
       const scanner = new Html5Qrcode("qr-reader");
       html5QrRef.current = scanner;
       await scanner.start(
@@ -46,14 +55,15 @@ export default function DoctorHome() {
           }
           setScannedData(data);
           try {
-            scanner.stop().catch(() => {});
+            scanner.stop().then(() => scanner.clear()).catch(() => {});
           } catch (e) {}
           setScanning(false);
         },
         () => {} // ignore scan failures
       );
     } catch (err) {
-      setError("Camera access denied or unavailable. Try manual entry instead.");
+      console.error("Scanner Error:", err);
+      setError("Camera access denied or unavailable. Please ensure you are on localhost or HTTPS, or try manual entry instead.");
       setScanning(false);
     }
   }, []);
@@ -61,7 +71,11 @@ export default function DoctorHome() {
   const stopScanner = useCallback(async () => {
     if (html5QrRef.current) {
       try {
-        await html5QrRef.current.stop();
+        const state = html5QrRef.current.getState();
+        if (state !== 1) { // 1 is UNKNOWN/NOT_STARTED
+          await html5QrRef.current.stop();
+        }
+        html5QrRef.current.clear();
       } catch (e) {}
       html5QrRef.current = null;
     }
@@ -70,15 +84,31 @@ export default function DoctorHome() {
 
   const handleManualSubmit = (e) => {
     e.preventDefault();
-    if (!manualForm.name || !manualForm.patientId) {
-      setError("Patient name and ID are required.");
+    if (!manualForm.patientId) {
+      setError("Patient ID is required.");
       return;
     }
+    
+    // Simulate fetching patient data from the network
     const patientData = {
-      ...manualForm,
+      name: manualForm.name || "Scanned Patient",
+      patientId: manualForm.patientId,
+      dob: manualForm.dob || "1985-06-20",
+      bloodGroup: manualForm.bloodGroup || "A+",
       allergies: manualForm.allergies ? manualForm.allergies.split(",").map(a => a.trim()) : [],
       conditions: manualForm.conditions ? manualForm.conditions.split(",").map(c => c.trim()) : [],
+      emergencyContact: manualForm.emergencyContact || "+1 555-0100"
     };
+
+    // Auto-fill Julian's mock data if the ID matches or if it came from the drawer click
+    if (manualForm.patientId.includes("0042") || manualForm.name === "Julian Reed") {
+       patientData.name = "Julian Reed";
+       patientData.dob = "1990-03-15";
+       patientData.bloodGroup = "O+";
+       patientData.allergies = ["Penicillin", "Latex"];
+       patientData.conditions = ["Hypertension", "Type 2 Diabetes"];
+    }
+
     navigateToPrescribe(patientData);
   };
 
@@ -97,10 +127,113 @@ export default function DoctorHome() {
 
   return (
     <div className="bg-surface text-on-surface font-body-md text-body-md min-h-screen flex flex-col antialiased">
+
+      {/* Navigation Drawer */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-[100] flex">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-indigo-900/20 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsDrawerOpen(false)}
+          ></div>
+          
+          {/* Drawer Content */}
+          <div className="relative w-80 max-w-[80vw] bg-surface h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 border-r border-outline-variant">
+            {/* Doctor Profile Header */}
+            <div className="p-6 bg-surface-container-low border-b border-outline-variant relative overflow-hidden">
+              {/* Decorative blob */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary-fixed/40 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+              
+              <div className="flex justify-between items-start mb-6 relative z-10">
+                <div className="w-16 h-16 rounded-full bg-primary-fixed border-4 border-surface shadow-sm flex items-center justify-center overflow-hidden">
+                  <span className="material-symbols-outlined text-3xl text-primary">medical_services</span>
+                </div>
+                <button onClick={() => setIsDrawerOpen(false)} className="text-on-surface-variant/70 hover:text-on-surface transition-colors p-1.5 rounded-full hover:bg-surface-variant">
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+              <div className="relative z-10">
+                <h2 className="text-xl font-headline-md text-on-surface tracking-tight mb-0.5">Dr. Sarah Jenkins</h2>
+                <p className="text-sm font-body-md text-on-surface-variant mb-4">Chief Medical Officer</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest bg-surface border border-outline-variant text-on-surface-variant uppercase shadow-sm">MED-88392</span>
+                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest bg-[#e8f5e9] border border-[#c8e6c9] text-[#2e7d32] uppercase shadow-sm flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#4caf50]"></span> Active
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Previous Patients List */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4 px-2">Recent Patients</h3>
+              <div className="space-y-2">
+                
+                {/* Patient 1 */}
+                <button onClick={() => { setManualForm({ ...manualForm, name: "Julian Reed", patientId: "MV-2024-0042", dob: "1990-03-15", bloodGroup: "O+", allergies: "Penicillin, Latex", conditions: "Hypertension, Type 2 Diabetes" }); setMode("manual"); setIsDrawerOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-surface-variant transition-colors group">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="font-bold text-sm text-on-surface group-hover:text-primary transition-colors">Julian Reed</p>
+                    <span className="text-[10px] text-primary font-bold bg-primary-fixed px-1.5 py-0.5 rounded">Today</span>
+                  </div>
+                  <p className="font-mono text-xs text-on-surface-variant mb-1">MV-2024-0042</p>
+                  <p className="text-xs text-on-surface-variant flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">prescriptions</span> Prescribed Lisinopril
+                  </p>
+                </button>
+
+                {/* Patient 2 */}
+                <button className="w-full text-left p-3 rounded-xl hover:bg-surface-variant transition-colors group">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="font-bold text-sm text-on-surface group-hover:text-primary transition-colors">Emily Chen</p>
+                    <span className="text-[10px] text-on-surface-variant">Yesterday</span>
+                  </div>
+                  <p className="font-mono text-xs text-on-surface-variant mb-1">MV-2023-1120</p>
+                  <p className="text-xs text-on-surface-variant flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">medical_information</span> Routine Checkup
+                  </p>
+                </button>
+
+                {/* Patient 3 */}
+                <button className="w-full text-left p-3 rounded-xl hover:bg-surface-variant transition-colors group">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="font-bold text-sm text-on-surface group-hover:text-primary transition-colors">Marcus Johnson</p>
+                    <span className="text-[10px] text-on-surface-variant">Oct 20</span>
+                  </div>
+                  <p className="font-mono text-xs text-on-surface-variant mb-1">MV-2024-0105</p>
+                  <p className="text-xs text-on-surface-variant flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">monitor_heart</span> Cardiology Consult
+                  </p>
+                </button>
+
+                {/* Patient 4 */}
+                <button className="w-full text-left p-3 rounded-xl hover:bg-surface-variant transition-colors group">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="font-bold text-sm text-on-surface group-hover:text-primary transition-colors">Sarah Williams</p>
+                    <span className="text-[10px] text-on-surface-variant">Oct 15</span>
+                  </div>
+                  <p className="font-mono text-xs text-on-surface-variant mb-1">MV-2022-8493</p>
+                  <p className="text-xs text-on-surface-variant flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">blood_test</span> Lab Results Review
+                  </p>
+                </button>
+
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="p-4 border-t border-outline-variant bg-surface-container-lowest">
+              <button className="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-bold text-error hover:bg-error-container transition-colors">
+                <span className="material-symbols-outlined text-[18px]">logout</span> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Shared Component: TopAppBar */}
       <header className="bg-white dark:bg-slate-900 font-plus-jakarta text-sm tracking-tight docked full-width top-0 border-b border-indigo-50 dark:border-indigo-900/50 shadow-sm shadow-indigo-900/5 flex justify-between items-center w-full px-6 h-16 z-50 sticky">
         {/* Leading Icon */}
-        <button className="text-indigo-900 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors active:scale-95 duration-150 p-2 rounded-full flex items-center justify-center">
+        <button onClick={() => setIsDrawerOpen(true)} className="text-indigo-900 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors active:scale-95 duration-150 p-2 rounded-full flex items-center justify-center">
           <span className="material-symbols-outlined">menu</span>
         </button>
         {/* Headline/Brand */}
@@ -235,40 +368,19 @@ export default function DoctorHome() {
                 </div>
 
                 <form onSubmit={handleManualSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-wider mb-1 block text-on-surface-variant">Patient Name *</label>
-                      <input className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="e.g. Julian Reed" value={manualForm.name} onChange={(e) => setManualForm({...manualForm, name: e.target.value})} required />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-wider mb-1 block text-on-surface-variant">MedVault ID *</label>
-                      <input className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface font-mono focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="MV-XXXX-XXXX" value={manualForm.patientId} onChange={(e) => setManualForm({...manualForm, patientId: e.target.value})} required />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-wider mb-1 block text-on-surface-variant">Date of Birth</label>
-                      <input type="date" className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" value={manualForm.dob} onChange={(e) => setManualForm({...manualForm, dob: e.target.value})} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-wider mb-1 block text-on-surface-variant">Blood Group</label>
-                      <select className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" value={manualForm.bloodGroup} onChange={(e) => setManualForm({...manualForm, bloodGroup: e.target.value})}>
-                        <option value="">Select...</option>
-                        {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(bg => <option key={bg} value={bg}>{bg}</option>)}
-                      </select>
-                    </div>
-                  </div>
                   <div>
-                    <label className="text-xs font-semibold uppercase tracking-wider mb-1 block text-on-surface-variant">Known Allergies</label>
-                    <input className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="Comma separated, e.g. Penicillin, Latex" value={manualForm.allergies} onChange={(e) => setManualForm({...manualForm, allergies: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-wider mb-1 block text-on-surface-variant">Existing Conditions</label>
-                    <input className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="Comma separated, e.g. Hypertension, Diabetes" value={manualForm.conditions} onChange={(e) => setManualForm({...manualForm, conditions: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase tracking-wider mb-1 block text-on-surface-variant">Emergency Contact</label>
-                    <input className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="+91 XXXXX XXXXX" value={manualForm.emergencyContact} onChange={(e) => setManualForm({...manualForm, emergencyContact: e.target.value})} />
+                    <label className="text-xs font-semibold uppercase tracking-wider mb-2 block text-on-surface-variant">MedVault ID</label>
+                    <input 
+                      className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-4 text-on-surface font-mono focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all shadow-inner" 
+                      placeholder="e.g. MV-2024-0042" 
+                      value={manualForm.patientId} 
+                      onChange={(e) => setManualForm({...manualForm, patientId: e.target.value})} 
+                      required 
+                      autoFocus
+                    />
+                    <p className="text-xs text-on-surface-variant mt-3 text-center">
+                      Our system will securely fetch the patient's records linked to this ID.
+                    </p>
                   </div>
 
                   {error && (

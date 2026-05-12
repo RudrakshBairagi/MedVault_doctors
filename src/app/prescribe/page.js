@@ -15,6 +15,7 @@ export default function PrescribePage() {
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const [symptomQuery, setSymptomQuery] = useState("");
   const [symptomSuggestions, setSymptomSuggestions] = useState([]);
@@ -124,6 +125,113 @@ export default function PrescribePage() {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-body-md antialiased flex flex-col">
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowPreview(false)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            {/* Prescription Header */}
+            <div className="border-b-2 border-indigo-900 p-8 flex justify-between items-start bg-indigo-50/30 rounded-t-xl">
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-indigo-900 tracking-tight">MedVault Clinic</h2>
+                <p className="text-sm text-gray-600 mt-1">123 Health Avenue, Medical District</p>
+                <p className="text-sm text-gray-600">Phone: +1 (555) 123-4567</p>
+              </div>
+              <div className="text-right">
+                <h3 className="text-lg font-bold text-gray-800">Dr. Sarah Jenkins</h3>
+                <p className="text-sm text-gray-600">Chief Medical Officer</p>
+                <p className="text-sm text-gray-600">Reg No: MED-88392</p>
+              </div>
+            </div>
+            
+            {/* Patient Info */}
+            <div className="p-8 border-b border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-6 bg-white">
+              <div className="sm:col-span-2">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Patient Name</p>
+                <p className="font-semibold text-gray-900">{patient.name}</p>
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Patient ID</p>
+                <p className="font-mono text-sm font-semibold text-primary">{patient.patientId}</p>
+              </div>
+              {patient.dob && (
+                <div className="sm:col-span-2">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date of Birth</p>
+                  <p className="font-semibold text-gray-900">{patient.dob}</p>
+                </div>
+              )}
+              <div className="sm:col-span-2">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Date</p>
+                <p className="font-semibold text-gray-900">{new Date().toLocaleDateString()}</p>
+              </div>
+            </div>
+
+            {/* Clinical Details */}
+            <div className="p-8 space-y-8 bg-white">
+              {selectedSymptoms.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-indigo-900 text-[20px]">stethoscope</span> Diagnosis / Symptoms
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedSymptoms.map(s => <span key={s} className="px-3 py-1 bg-gray-100 text-gray-800 rounded-md text-sm font-medium">{s}</span>)}
+                  </div>
+                </div>
+              )}
+
+              {medications.length > 0 && (
+                <div>
+                  <h4 className="font-serif italic text-4xl text-indigo-900 mb-5 relative top-1">Rx</h4>
+                  <div className="space-y-4">
+                    {medications.map((med, i) => (
+                      <div key={i} className="flex justify-between items-start border-l-2 border-indigo-900/20 pl-4 py-1">
+                        <div>
+                          <p className="font-bold text-gray-900 text-lg">{med.name}</p>
+                          <p className="text-gray-600 text-sm mt-0.5">{med.dosage}</p>
+                        </div>
+                        <div className="text-right">
+                          {med.duration && <span className="bg-indigo-50 text-indigo-800 px-3 py-1 rounded-md text-sm font-bold border border-indigo-100">{med.duration}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {notes && (
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-indigo-900 text-[20px]">clinical_notes</span> Clinical Notes
+                  </h4>
+                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm bg-yellow-50/50 p-4 rounded-xl border border-yellow-100/50">{notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer & Signature */}
+            <div className="p-8 pt-0 mt-4 flex justify-between items-end bg-white">
+              <div className="text-[10px] text-gray-400 uppercase tracking-widest leading-relaxed">
+                <p>Generated securely via MedVault</p>
+                <p>Digital signature verified</p>
+              </div>
+              <div className="text-center w-48">
+                <div className="border-b border-gray-300 h-12 mb-2 flex items-end justify-center pb-1">
+                  <span className="font-serif italic text-3xl text-indigo-900 opacity-80" style={{ transform: 'rotate(-5deg)' }}>S. Jenkins</span>
+                </div>
+                <p className="text-xs text-gray-500 font-medium">Doctor's Signature</p>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="bg-gray-50 p-4 sm:px-8 border-t border-gray-200 flex justify-end gap-3 rounded-b-xl">
+              <button onClick={() => setShowPreview(false)} className="px-6 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors">Close</button>
+              <button onClick={() => { setShowPreview(false); handleUpload(); }} disabled={isSubmitting || selectedSymptoms.length === 0} className="px-6 py-2.5 rounded-lg font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px]">cloud_upload</span> Upload
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Shared Component: TopAppBar */}
       <header className="bg-white dark:bg-slate-900 font-plus-jakarta text-sm tracking-tight docked full-width top-0 border-b border-indigo-50 dark:border-indigo-900/50 shadow-sm shadow-indigo-900/5 flex justify-between items-center w-full px-6 h-16 z-50 sticky">
         <div className="flex items-center gap-3">
@@ -276,14 +384,20 @@ export default function PrescribePage() {
                 </div>
               </div>
               <div className="h-px w-full bg-outline-variant/50 mb-5" />
-              <button onClick={handleUpload} disabled={isSubmitting || selectedSymptoms.length === 0}
+              <div className="flex flex-col gap-3">
+                <button onClick={() => setShowPreview(true)} disabled={selectedSymptoms.length === 0}
+                  className={`w-full py-3.5 rounded-lg font-label-lg transition-all flex items-center justify-center gap-2 ${selectedSymptoms.length === 0 ? "opacity-50 cursor-not-allowed bg-surface-container text-on-surface-variant border border-outline-variant" : "bg-surface-container text-on-surface border border-outline-variant hover:bg-surface-variant"}`}>
+                  <span className="material-symbols-outlined text-lg">visibility</span> Preview Prescription
+                </button>
+                <button onClick={handleUpload} disabled={isSubmitting || selectedSymptoms.length === 0}
                 className={`w-full py-3.5 rounded-lg font-label-lg transition-all flex items-center justify-center gap-2 ${isSubmitting || selectedSymptoms.length === 0 ? "opacity-50 cursor-not-allowed bg-surface-container text-on-surface-variant border border-outline-variant" : "bg-primary text-on-primary shadow-sm hover:bg-tertiary"}`}>
                 {isSubmitting ? (
                   <><span className="material-symbols-outlined text-lg animate-spin">progress_activity</span> Uploading...</>
                 ) : (
                   <><span className="material-symbols-outlined text-lg">cloud_upload</span> Upload to MedVault</>
                 )}
-              </button>
+                </button>
+              </div>
               {selectedSymptoms.length === 0 && (
                 <p className="text-xs text-center mt-3 py-2 rounded-lg bg-surface-variant text-on-surface-variant border border-outline-variant">
                   Add at least one symptom to continue.
