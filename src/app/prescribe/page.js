@@ -233,20 +233,20 @@ export default function PrescribePage() {
       )}
 
       {/* Shared Component: TopAppBar */}
-      <header className="bg-white dark:bg-slate-900 font-plus-jakarta text-sm tracking-tight docked full-width top-0 border-b border-indigo-50 dark:border-indigo-900/50 shadow-sm shadow-indigo-900/5 flex justify-between items-center w-full px-6 h-16 z-50 sticky">
+      <header className="bg-primary text-white font-plus-jakarta text-sm tracking-tight docked full-width top-0 shadow-md flex justify-between items-center w-full px-6 h-16 z-50 sticky">
         <div className="flex items-center gap-3">
-          <button onClick={handleNewPrescription} className="text-indigo-900 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors active:scale-95 duration-150 p-2 rounded-full flex items-center justify-center">
+          <button onClick={handleNewPrescription} className="text-white hover:bg-white/10 transition-colors active:scale-95 duration-150 p-2 rounded-full flex items-center justify-center">
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-indigo-900 dark:text-indigo-100">
-              Clinical <span className="text-primary">Prescription</span>
+            <h1 className="text-lg font-bold tracking-tight text-white">
+              Clinical Prescription
             </h1>
           </div>
         </div>
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-fixed border border-primary-fixed-dim">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs font-semibold text-primary">NIH Connected</span>
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 border border-white/30">
+          <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          <span className="text-xs font-semibold text-white">NIH Connected</span>
         </div>
       </header>
 
@@ -303,23 +303,23 @@ export default function PrescribePage() {
                 <span className="material-symbols-outlined text-tertiary">medication</span>
                 <h2 className="font-headline-md text-title-lg text-on-surface">Prescribe Medication</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                <div className="relative">
+              <div className="flex flex-col md:flex-row gap-3 mb-4 w-full">
+                <div className="relative flex-1 min-w-0">
                   <input className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="Search medicine..." value={newMed.name} onChange={(e) => setNewMed({...newMed, name: e.target.value})} />
                   {medSuggestions.length > 0 && (
                     <ul className="absolute z-20 w-full mt-2 rounded-xl overflow-hidden max-h-48 overflow-y-auto bg-surface-container-lowest border border-outline-variant shadow-lg">
                       {medSuggestions.map((s, i) => (
-                        <li key={i} onClick={() => { setNewMed({...newMed, name: s}); setMedSuggestions([]); }} className="px-4 py-3 cursor-pointer text-sm text-on-surface border-b border-outline-variant hover:bg-surface-variant transition-colors">
+                        <li key={i} onClick={() => { setNewMed({...newMed, name: s}); setMedSuggestions([]); }} className="px-4 py-3 cursor-pointer text-sm text-on-surface border-b border-outline-variant hover:bg-surface-variant transition-colors truncate">
                           {s}
                         </li>
                       ))}
                     </ul>
                   )}
                 </div>
-                <input className="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="Dosage (e.g. 1-0-1)" value={newMed.dosage} onChange={(e) => setNewMed({...newMed, dosage: e.target.value})} />
-                <div className="flex gap-2">
-                  <input className="flex-1 bg-surface border border-outline-variant rounded-lg px-4 py-3 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="Duration" value={newMed.duration} onChange={(e) => setNewMed({...newMed, duration: e.target.value})} />
-                  <button onClick={addMedication} className="bg-primary text-on-primary font-label-lg px-4 py-2 rounded-lg hover:bg-tertiary transition-colors">Add</button>
+                <input className="w-full md:w-32 shrink-0 bg-surface border border-outline-variant rounded-lg px-4 py-3 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="Dosage (1-0-1)" value={newMed.dosage} onChange={(e) => setNewMed({...newMed, dosage: e.target.value})} />
+                <div className="flex gap-2 w-full md:w-auto shrink-0">
+                  <input className="flex-1 md:w-24 min-w-0 bg-surface border border-outline-variant rounded-lg px-4 py-3 text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-fixed outline-none transition-all" placeholder="Duration" value={newMed.duration} onChange={(e) => setNewMed({...newMed, duration: e.target.value})} />
+                  <button onClick={addMedication} className="shrink-0 bg-primary text-on-primary font-label-lg px-4 py-2 rounded-lg hover:bg-tertiary transition-colors">Add</button>
                 </div>
               </div>
               {medications.length > 0 && (
@@ -352,9 +352,19 @@ export default function PrescribePage() {
             {/* Patient Card */}
             <div className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-primary"></div>
-              <h3 className="text-xs font-bold uppercase tracking-wider mb-4 text-primary mt-2">Patient Details</h3>
-              <p className="font-headline-lg text-title-lg mb-1 text-on-surface">{patient.name}</p>
-              <p className="font-mono text-sm mb-4 text-on-surface-variant">{patient.patientId}</p>
+              
+              <div className="flex items-center gap-4 mt-2 mb-4">
+                <img 
+                  src={patient.name === 'Julian Reed' ? "https://lh3.googleusercontent.com/aida-public/AB6AXuBHZCPn7NSZ2wu_mpVYu5uo2tcRmwuvX1JjcwapY_A8k-PEoefNVVP2qS9-v3U2fhpyClVhtCy7iDgZs-5tlguih_1U5vfdVySYWESX61Jmhdj7eqgYhU5-CtRU_zV5GO-i5NkVBdVcfIRM7YLW8ya5cYrhVU-wLHQVOp_GOoRWZG34gwXYor-quySTVe00p_hgF3vENghkwcWuNGh9AMfgpdFMs7uRdIDzgqMn7Gm99tfJAlXrkaJy8wLOAE2tH_IhRCoT7mQgldw" : `https://ui-avatars.com/api/?name=${encodeURIComponent(patient.name)}&background=e0e0ff&color=000666`} 
+                  className="w-16 h-16 rounded-full border-2 border-primary-fixed object-cover shadow-sm shrink-0" 
+                  alt={patient.name} 
+                />
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Patient Details</h3>
+                  <p className="font-headline-lg text-title-lg mb-0 text-on-surface truncate">{patient.name}</p>
+                  <p className="font-mono text-xs text-on-surface-variant truncate">{patient.patientId}</p>
+                </div>
+              </div>
               {patient.bloodGroup && <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 mb-3">🩸 {patient.bloodGroup}</span>}
               {patient.allergies?.length > 0 && (
                 <div className="mt-3">
@@ -368,6 +378,10 @@ export default function PrescribePage() {
                   <div className="flex flex-wrap gap-1">{patient.conditions.map(c => <span key={c} className="px-2 py-1 rounded-md bg-primary-fixed text-primary text-xs font-bold border border-primary-fixed-dim">{c}</span>)}</div>
                 </div>
               )}
+              
+              <button onClick={() => router.push("/history")} className="w-full mt-6 py-2.5 rounded-lg font-label-md bg-surface-container text-on-surface hover:bg-surface-variant border border-outline-variant transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <span className="material-symbols-outlined text-lg">history</span> View Past Documentations
+              </button>
             </div>
 
             {/* Summary */}

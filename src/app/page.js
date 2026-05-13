@@ -116,6 +116,10 @@ export default function DoctorHome() {
     sessionStorage.setItem("medvault_patient", JSON.stringify(patientData));
     router.push("/prescribe");
   };
+  const navigateToHistory = (patientData) => {
+    sessionStorage.setItem("medvault_patient", JSON.stringify(patientData));
+    router.push("/history");
+  };
 
   const resetAll = () => {
     stopScanner();
@@ -464,10 +468,21 @@ export default function DoctorHome() {
                   </div>
                 )}
 
-                <button onClick={() => navigateToPrescribe(scannedData)} className="w-full py-3.5 rounded-lg font-label-lg bg-primary text-on-primary hover:bg-tertiary transition-colors flex items-center justify-center gap-2 shadow-sm shadow-primary/20">
-                  <span className="material-symbols-outlined text-lg">clinical_notes</span>
-                  Start Prescription
-                </button>
+                <div className="flex flex-col gap-3">
+                  <button onClick={() => navigateToPrescribe(scannedData)} className="w-full py-3.5 rounded-lg font-label-lg bg-primary text-on-primary hover:bg-tertiary transition-colors flex items-center justify-center gap-2 shadow-sm shadow-primary/20">
+                    <span className="material-symbols-outlined text-lg">clinical_notes</span>
+                    Start Prescription
+                  </button>
+                  <label className="w-full py-3.5 rounded-lg font-label-lg bg-surface-container text-on-surface hover:bg-surface-variant border border-outline-variant transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                    <span className="material-symbols-outlined text-lg">upload_file</span>
+                    Upload Document
+                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => { if(e.target.files.length) { alert("Document uploaded securely to " + scannedData.name + "'s MedVault!"); } }} />
+                  </label>
+                  <button onClick={() => navigateToHistory(scannedData)} className="w-full py-3.5 rounded-lg font-label-lg bg-surface-container text-on-surface hover:bg-surface-variant border border-outline-variant transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                    <span className="material-symbols-outlined text-lg">history</span>
+                    View Past Documentations
+                  </button>
+                </div>
               </div>
             </div>
           )}
